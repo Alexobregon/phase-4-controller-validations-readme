@@ -1,5 +1,6 @@
 class BirdsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found_response
+  rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity_response
 
   # GET /birds
   def index
@@ -10,7 +11,11 @@ class BirdsController < ApplicationController
   # POST /birds
   def create
     bird = Bird.create(bird_params)
+    if bird.valid?
     render json: bird, status: :created
+    else 
+      render json: { errors: bird.errors }, status: :unprocessable_entity
+    end
   end
 
   # GET /birds/:id
@@ -35,6 +40,10 @@ class BirdsController < ApplicationController
 
   private
 
+  def render_unprocessable_entity_response(invalid)
+    render json: { errors: invalid.record.errors }, status: :unprocessable_entity
+  end
+  
   def find_bird
     Bird.find(params[:id])
   end
